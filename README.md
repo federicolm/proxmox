@@ -20,11 +20,19 @@ node=$(cat /etc/hostname)
 echo "Prossimo id utilizzabile : pallino-$numid-ciccio"
 
 #TODO : sviluppare la casistica di più storage sia locali che remoti che cluster ceph e di più nodi in casi di cluster proxmox
+
 #TODO 2 : per la casistica di creare una VM/CT/quello che ti pare, in un cluster, bisognerebbe prima sviluppare una parte di script che vada a leggere le configurazioni delle varie risorse ancora disponibili rispetto alle vm/ct/etc attualmente presenti nodo per nodo.
+
 #TODO 3 : dal TODO 2 bisogna considerare 1 volta solamente le risorse condivise tipo storage remoti oppure cluster ceph in hyperconvergenza
 pvesh create /nodes/$node/storage/local/content -filename vm-$numid-disk-0.qcow2 -format qcow2 -size 32G -vmid $numid
 
-pvesh create /nodes/$node/qemu -vmid $numid -memory 2048 -sockets 1 -cores 4 -net0 e1000,bridge=vmbr1 -ide0=local:$numid/vm-$numid-disk-0.qcow2 -ide1=local:iso/CentOS-7-x86_64-Everything-2009.iso,media=cdrom
+pvesh create /nodes/$node/qemu -vmid $numid \ 
+        -memory 2048 \
+        -sockets 1 \
+        -cores 4 \
+        -net0 e1000,bridge=vmbr1 \
+        -ide0=local:$numid/vm-$numid-disk-0.qcow2 \
+        -ide1=local:iso/CentOS-7-x86_64-Everything-2009.iso,media=cdrom
 
 #qm create $numid --agent enabled=1,fstrim_cloned_disks=1 --autostart 1
 
