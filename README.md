@@ -62,3 +62,17 @@ if [[ -f "$file"  ]]; then
 
         fi
 fi
+
+###### Sezione tips & tricks
+
+Quando NON si vuole utilizzare local, ma si ha dello storage locale aggiuntivo,
+bisogna prima configurarlo come "directory" aggiungendolo direttamente in Datacenter---> "nodo pve" ---> Disks ---> Directory
+cliccare su "Create Directory",
+selezionare il device da aggiungere,
+specificare il file system da utilizzare (ext4, xfs),
+specificare il nome dello storage
+
+Questa procedura permette di avere uno storage diverso da "local" per mettere i files delle VM in formato qcow2 (formato che supporta lo snapshot pronti all'uso ed i cloni : https://pve.proxmox.com/pve-docs/chapter-pvesm.html#_storage_features) 
+
+N.B. : Anche questa parte è da automatizzare con uno script bash/ansible.
+
