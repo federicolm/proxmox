@@ -1,49 +1,29 @@
 #!/bin/bash
 
-# TODO LIST
-# -) creare un elenco di files in cui saranno presenti i links da cui scaricare le immagini cloudinit dei vari sistemi operativi scelti alle varie versioni
-# -) in questo script ci sarà semplicemente un elenco generale degli OS 
-# -) lo script una volta scaricata l'immagine ne creerà una vm e la trasformerà in un template in modo da poterlo poi clonare per le varie VM cloudinit da poter creare
-# -) l'id dei template avranno un offset impostato nello script
+#TODO : questa è solo una bozza, da migliorare pesantemente !
 
-offset=9000
+wget -P /var/lib/vz/template/cloudinit https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img ;
 
-lastIdUsed=$(qm list | grep -vi 'vmid' | awk '{print $1}' | sort | tail -1)
+qm create 9000 --memory 2048 --cores 4 --net0 virtio,bridge=vmbr0 ;
 
-nextId=$(( lastIdUsed + 1 ))
+qm importdisk 9000 /var/lib/vz/template/cloudinit/jammy-server-cloudimg-amd64.img local-lvm ;
 
-defaultPath=/var/lib/vz/template/cloudinit
+qm set 9000 --scsihw virtio-scsi-pci --scsi0 local-lvm:vm-9000-disk-0 ;
 
-if [[ ! -d $defaultPath ]] ; then
-	mkdir -p $defaultPath
-	echo "La directory non esiste ed è stata creata"
-else
-	echo "La directory esiste !"
-fi
+qm set 9000 --ide2 local-lvm:cloudinit ;
 
-readarray -d '' -t targets < <(grep --null -ri "http" ./files | awk -F ".cfg" '{print $2}')
+qm set 9000 --boot c --bootdisk scsi0 ;
 
-#sizeList=${#listDownload[@]}
+qm set 9000 --serial0 socket --vga serial0 ;
 
-echo "dimensione array : ${#targets[@]}"
+qm template 9000 ;
 
-for str in ${targets[@]}; do
-	my_arr=($(echo $str | tr "/" "\n"))
-	nomeFile=${my_arr[-1]}
-	echo "$nomeFile"
-	if [[ ! -f $defaultPath/$nomeFile ]]; then
-		echo "il file non esiste !"
-		ls -la $defaultPath/$nomeFile
-		wget -P $defaultPath $str
-		/usr/bin/ls $defaultPath/$nomeFile
-		retVal=$?
-		echo "#############################"
-		echo "stato di uscita del wget : $retVal"
-		echo "#############################"
-		echo "Scaricato il file $nomeFile in $defaultPath"
-		ls -la $defaultPath/$nomeFile
-	else
-		echo "Il file $defaultPath/$nomeFile esiste"
-	fi
-done
+qm clone 9000 123 --name ubuntu2 ;
 
+qm set 123 --ipconfig0 ip=192.168.2.123/24,gw=192.168.2.1 --agent enabled=1 --sshkey /root/chiavissh/id_rsa_123.pub ;
+
+qm resize 123 scsi0 10G ;
+
+qm set 123 --sshkey /root/chiavissh/id_rsa_123.pub ;
+qm set 123 --ciuser="ubuntu" --cipassword="password" ; #Pare non funzionare bene !
+qm set 123 --cicustom "user=local:snippets/123.yaml" ;
