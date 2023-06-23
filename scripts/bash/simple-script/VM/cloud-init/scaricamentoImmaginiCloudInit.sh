@@ -14,16 +14,25 @@ defaultPath=/var/lib/vz/template/cloudinit
 echo "\$1 : $1" 
 echo "\$2 : $2"
 
-if [ ! $2 == "" ] ; then
-	echo "prensente qualcosa"
+if [ ! $1 == "" && ] ; then
+	echo "Percorso immagine specificato ed esistente"
 	defaultPath=$2
 else
-	echo "variabile non impostata"
+	echo "Percorso della immagine non specificato"
+	exit 1
+fi
+
+
+if [ $2 != "" ] ; then
+	echo "Percorso impostato ed esistente"
+	defaultPath=$2
+else
+	echo "Percorso non specificato si utilizza quello di default"
 fi
 
 if [[ ! -d $defaultPath ]] ; then
 	mkdir -p $defaultPath
-	echo "La directory non esiste ed è stata creata"
+	echo "Il percorso di default non esiste ed è stata creata"
 else
 	echo "La directory esiste !"
 fi
