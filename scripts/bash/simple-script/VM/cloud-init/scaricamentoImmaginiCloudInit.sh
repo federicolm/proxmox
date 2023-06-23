@@ -1,10 +1,25 @@
 #!/bin/bash
 
+# Utilizzo script : 
+# se si vuole usare un path personalizzato
+# ./scaricamentoImmaginiCloudInit.sh <url cloudinit image> <path download>
+# se si vuole usare il path di default 
+# ./scaricamentoImmaginiCloudInit.sh <url cloudinit image> 
 # Lista variabili input
 # $1 : url del file cloudinit da scaricare
 # $2 : path dove scaricare il file di cloudinit
 
 defaultPath=/var/lib/vz/template/cloudinit
+
+echo "\$1 : $1" 
+echo "\$2 : $2"
+
+if [ ! $2 == "" ] ; then
+	echo "prensente qualcosa"
+	defaultPath=$2
+else
+	echo "variabile non impostata"
+fi
 
 if [[ ! -d $defaultPath ]] ; then
 	mkdir -p $defaultPath
@@ -17,25 +32,23 @@ url=$1
 
 destinazione=$2
 
-#sizeList=${#listDownload[@]}
-
-echo "dimensione array : ${#targets[@]}"
 
 my_arr=($(echo $url | tr "/" "\n"))
 echo "my_arr : $my_arr"
 nomeFile=${my_arr[-1]}
 echo "$nomeFile"
-#if [[ ! -f $defaultPath/$nomeFile ]]; then
-#	echo "il file non esiste !"
-#	ls -la $defaultPath/$nomeFile
-#	wget -P $defaultPath $str
-#	/usr/bin/ls $defaultPath/$nomeFile
-#	retVal=$?
-#	echo "#############################"
-#	echo "stato di uscita del wget : $retVal"
-#	echo "#############################"
-#	echo "Scaricato il file $nomeFile in $defaultPath"
-#	ls -la $defaultPath/$nomeFile
-#else
-#	echo "Il file $defaultPath/$nomeFile esiste"
-#fi
+
+if [[ ! -f $defaultPath/$nomeFile ]]; then
+	echo "il file non esiste !"
+	ls -la $defaultPath/$nomeFile
+	wget -P $defaultPath $url
+	/usr/bin/ls $defaultPath/$nomeFile
+	retVal=$?
+	echo "#############################"
+	echo "stato di uscita del wget : $retVal"
+	echo "#############################"
+	echo "Scaricato il file $nomeFile in $defaultPath"
+	ls -la $defaultPath/$nomeFile
+else
+	echo "Il file $defaultPath/$nomeFile esiste"
+fi
