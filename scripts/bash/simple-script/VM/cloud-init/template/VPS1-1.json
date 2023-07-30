@@ -1,0 +1,8 @@
+// Profilo VPS1-1
+{
+	"nomeProfilo" : "VPS1-1",
+	"cpu" : 1,
+	"sockets" : 1,
+	"ram" : 1024,
+	"storage" : "20G"
+}

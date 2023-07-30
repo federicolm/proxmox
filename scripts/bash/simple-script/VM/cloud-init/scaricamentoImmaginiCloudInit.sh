@@ -14,7 +14,7 @@ defaultPath=/var/lib/vz/template/cloudinit
 echo "\$1 : $1" 
 echo "\$2 : $2"
 
-if [ ! $1 == "" && ] ; then
+if [ ! $1 == "" ] ; then
 	echo "Percorso immagine specificato ed esistente"
 	defaultPath=$2
 else
