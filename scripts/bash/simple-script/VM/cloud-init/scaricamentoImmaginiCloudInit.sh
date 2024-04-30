@@ -9,44 +9,83 @@
 # $1 : url del file cloudinit da scaricare
 # $2 : path dove scaricare il file di cloudinit
 
+checkURL(){
+	regex="http?(s)"
+	if [[ "$url" == ${regex}* ]] ; then
+		echo "l'url fa matching con http/s"
+	else
+		echo "l'url non fa matching con http/s"
+		exit 1
+	fi
+}
+
+checkPathDownload(){
+	ls -la $defaultPath
+	ritorno=$?
+	if [ $ritorno == "0" ] ; then
+		echo "Il path di download immesso risulta essere corretto"
+	else
+		echo "Il path di download non esiste, mi interrompo"
+		exit 1
+	fi
+}
+
 defaultPath=/var/lib/vz/template/cloudinit
+url=""
 
-echo "\$1 : $1" 
-echo "\$2 : $2"
+echo "Url cloudinit image : $1" 
+echo "Path download : $2"
 
-if [ ! $1 == "" ] ; then
-	echo "Percorso immagine specificato ed esistente"
+numbersInputVariables=$#
+echo "Numero variabili in input : $numbersInputVariables"
+
+if [ $numbersInputVariables == "2" ] ; then
+	echo "Numero di variabili corretto"
+	url=$1
 	defaultPath=$2
+	echo "Verifico l'url immessa"
+	checkURL
+	ritorno=$?
+	if [ $ritorno == "0" ] ; then 
+		echo "L'url specificata risulta essere conforme"
+	else
+		echo "l'url specificata non risulta essere conforme, mi interrompo"
+		exit 1
+	fi
+
+	echo "Verifico il path di download che esista"
+	checkPathDownload
+	ritorno=$?
+	if [ $ritorno == "0" ] ; then 
+		echo "Il path specificato risulta essere conforme"
+	else
+		# Per il momento ignoro la funzione che possa creare un path di download congruo con i vari ed eventuali storage a disposizione di proxmox 
+		# sia locali che remoti che distribuiti, ignorando anche la gestione anticipata del check dello spazio libero in fase di download
+		# per bloccare anticipatamente download impossibili da completarne lo scaricamento.
+		echo "Il path specificato non risulta essere conforme, mi interrompo"
+		exit 1
+	fi
+elif [ $numbersInputVariables == "1" ] ; then
+	echo "Path download non specificato, utilizzo il default : $defaultPath"
+	echo "Verifico l'url immessa"
+	checkURL
+	ritorno=$?
+	if [ $ritorno == "0"] ; then 
+		echo "L'url specificata risulta essere conforme"
+		url=$1
+	else
+		echo "l'url specificata non risulta essere conforme, mi interrompo"
+		exit 1
+	fi
 else
-	echo "Percorso della immagine non specificato"
+	echo "Numero di parametri non congruo con esecuzione corretta dello script, mi interrompo"
 	exit 1
 fi
-
-
-if [ $2 != "" ] ; then
-	echo "Percorso impostato ed esistente"
-	defaultPath=$2
-else
-	echo "Percorso non specificato si utilizza quello di default"
-fi
-
-if [[ ! -d $defaultPath ]] ; then
-	mkdir -p $defaultPath
-	echo "Il percorso di default non esiste ed è stata creata"
-else
-	echo "La directory esiste !"
-fi
-
-url=$1
-
-destinazione=$2
-
 
 my_arr=($(echo $url | tr "/" "\n"))
 echo "my_arr : $my_arr"
 nomeFile=${my_arr[-1]}
 echo "$nomeFile"
-
 if [[ ! -f $defaultPath/$nomeFile ]]; then
 	echo "il file non esiste !"
 	ls -la $defaultPath/$nomeFile
