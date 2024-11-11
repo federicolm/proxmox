@@ -4,7 +4,7 @@
 #
 # Utilizzo : ./migrazione_vm.sh <vmid> <nodo destinazione> <>
 #
-# Opzioni interne da valutare
+# Opzioni interne da valutare del comando "qm migrate"
 #
 # --migration_network <string>
 # CIDR of the (sub) network that is used for migration.
@@ -24,3 +24,17 @@
 # Valutare la tipologia di storage su cui risiede la vm per differenziale le casistiche di storale locale e storage distribuito o remoto, in modo tale
 # da utilizzare o meno l'opzione --with-local-disks <boolean>
 
+vmid=$1
+destination=$2
+
+echo "id vm : $vmid"
+echo "destionazione : $destination"
+
+qm migrate $vmid $destination --online
+result=$?
+
+if [[ $rsult == "0" ]];then
+	echo "Migrazione avvenuta correttamente"
+else
+	echo "Si è verificato un errore di migrazione"
+fi
