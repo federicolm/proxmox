@@ -36,6 +36,12 @@ else
 	exit 1
 fi
 
+# Numero di nodi del cluster
+pvesh get nodes --output-format json | jq '.| length'
+
+# Nome del primo nodo visto dal cluster
+pvesh get nodes --output-format json | jq -r '.[0].node'
+
 # Dall'id offset in poi ci sono i template delle VM
 #offset=9000
 #
