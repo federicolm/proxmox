@@ -35,7 +35,7 @@ Il report inviato via email include:
    ```bash
    nano /etc/postfix/main.cf
    ```
-   vai in fondo ed aggiungi
+   vai in fondo ed aggiungi (esempio per utilizzare gmail)
    ```bash
    relayhost = [smtp.gmail.com]:587
    smtp_sasl_auth_enable = yes
