@@ -1,0 +1,78 @@
+# 🛡️ PVE & SSH Sentinel: Active Defense System
+
+**PVE Sentinel** è uno script bash avanzato per **Proxmox Virtual Environment** progettato per monitorare, analizzare e neutralizzare attacchi brute-force in tempo reale. Analizza i log di sistema (SSH e GUI Proxmox), identifica gli attaccanti più aggressivi e applica automaticamente il ban tramite Fail2Ban, generando infine un report grafico in HTML.
+
+
+
+## ✨ Caratteristiche principali
+
+* **Analisi Deep History**: Scansione completa di tutta la cronologia del Journal (non solo le ultime ore).
+* **Auto-Ban Intelligente**: Rileva gli IP con migliaia di tentativi falliti e li aggiunge istantaneamente alle jail di Fail2Ban (`sshd` o `proxmox`).
+* **Geolocalizzazione**: Identifica la nazione di provenienza dei Top 10 attaccanti.
+* **Target Intelligence**: Distingue tra attacchi rivolti alla Web GUI e quelli al servizio SSH.
+* **Report Grafico Email**: Genera un report HTML elegante con tema "Dark Dashboard" e lo invia via email tramite Mutt/Postfix.
+* **Zero Dipendenze Manuali**: Lo script verifica e installa automaticamente tutti i pacchetti necessari (`curl`, `mutt`, `sqlite3`, ecc.).
+
+## 📊 Anteprima del Report
+Il report inviato via email include:
+- **Global Stats**: Totale attacchi respinti vs login riusciti.
+- **Top 5 Nations**: Classifica dei paesi più ostili.
+- **Top 10 Offenders**: Lista dettagliata degli IP, numero di prove e stato del ban.
+- **Targeted Users**: Elenco dei nomi utente più tentati dai bot.
+
+## 🚀 Installazione Rapida
+
+1. **Scarica lo script:**
+   ```bash
+   wget [https://github.com/TUO_UTENTE/pve-sentinel/raw/main/audit_ssh_gui.sh](https://github.com/TUO_UTENTE/pve-sentinel/raw/main/audit_ssh_gui.sh)
+   chmod +x audit_ssh_gui.sh
+
+2. **Configura la tua email:**
+   ```bash
+   EMAIL="tua@email.it"
+   
+3. **Configura il postfix sul proxmox:**
+   ```bash
+   nano /etc/postfix/main.cf
+   ```
+   vai in fondo ed aggiungi
+   ```bash
+   relayhost = [smtp.gmail.com]:587
+   smtp_sasl_auth_enable = yes
+   smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+   smtp_sasl_security_options = noanonymous
+   smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+   smtp_use_tls = yes
+   ```
+   attento ai doppio di 
+   ```bash
+   relayhost = 
+   ```
+   
+   riavvia posffix e riavvia la coda :
+   ```bash
+   systemctl restart postfix
+   postqueue -f
+   ```
+
+4. **Esegui:**
+   ```bash
+   ./audit_ssh_gui.sh
+
+## 📅 Automazione (Cronjob)
+Per ricevere il report di sicurezza ogni lunedì mattina alle 08:00, aggiungi questa riga al tuo crontab di root:
+
+```Bash
+crontab -e
+# Aggiungi in fondo:
+00 08 * * 1 /root/audit_ssh_gui.sh > /dev/null 2>&1
+```
+## 🛠️ Requisiti
+* **Sistema Operativo**: Proxmox VE 7.x, 8.x o 9.x.
+* **Servizi**: Fail2Ban installato e attivo con le jail `sshd` e `proxmox`.
+* **Email**: Postfix configurato correttamente (consigliato l'uso di un Relay SMTP come Gmail).
+
+## 🛡️ Sicurezza
+Lo script richiede privilegi di root per poter leggere i log di sistema (journalctl) e interagire con fail2ban-client per eseguire i ban.
+
+## ⭐ Se questo script ti è stato utile, lascia una stella su GitHub!
