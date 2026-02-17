@@ -9,5 +9,13 @@ backend = systemd
 journalmatch = _SYSTEMD_UNIT=ssh.service
 maxretry = 5
 findtime = 1d
-# Questa riga imposta un ban perpetuo
+bantime  = -1
+
+[proxmox]
+enabled = true
+port    = 8006
+filter  = proxmox
+logpath = /var/log/pveproxy/access.log
+maxretry = 5
+findtime = 1d
 bantime  = -1
