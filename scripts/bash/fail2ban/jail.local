@@ -1,0 +1,13 @@
+## Esempio di configurazione di fail2ban
+[sshd]
+enabled = true
+port    = ssh
+# Forza l'uso del filtro sshd ma con backend systemd
+filter  = sshd
+backend = systemd
+# Questa riga è fondamentale: dice a fail2ban cosa cercare nel journal
+journalmatch = _SYSTEMD_UNIT=ssh.service
+maxretry = 5
+findtime = 1d
+# Questa riga imposta un ban perpetuo
+bantime  = -1
