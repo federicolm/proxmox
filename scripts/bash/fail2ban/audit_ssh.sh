@@ -1,62 +1,88 @@
 #!/bin/bash
 
-echo "========================================================"
-echo "      SSH SENTINEL - PERMANENT FORTRESS MODE"
-echo "========================================================"
+# Colori
+GREEN='\033[0;32m'
+RED='\033[0;31m'
+YELLOW='\033[1;33m'
+CYAN='\033[0;36m'
+NC='\033[0m' 
 
-# Recupero parametri reali da Fail2Ban
-MAX_RETRY=$(fail2ban-client get sshd maxretry)
-FIND_TIME_SEC=$(fail2ban-client get sshd findtime)
-BAN_TIME=$(fail2ban-client get sshd bantime)
+echo -e "${YELLOW}========================================================${NC}"
+echo -e "      PVE & SSH SENTINEL - OMNISCIENT ACTIVE AUDIT"
+echo -e "      Data: $(date)"
+echo -e "${YELLOW}========================================================${NC}"
 
-# Se findtime è un giorno, lo formattiamo bene per il journal
-FIND_TIME_JOURNAL="${FIND_TIME_SEC} seconds"
+# 1. Caricamento Dati
+echo -ne "[*] Analisi totale Journal (Deep History)... "
 
-echo "[*] Configurazione Attiva:"
-echo "    -> Maxretry:  $MAX_RETRY"
-echo "    -> Findtime:  $FIND_TIME_JOURNAL"
-echo "    -> Bantime:   $BAN_TIME (Permanente)"
+# SSH Data
+SSH_RAW=$(journalctl _SYSTEMD_UNIT=ssh.service | grep "Failed password")
+SSH_OK=$(journalctl _SYSTEMD_UNIT=ssh.service | grep -c "Accepted password")
+SSH_IPS=$(echo "$SSH_RAW" | sed -n 's/.*from \([^ ]*\) port.*/\1/p')
+
+# GUI Data
+GUI_RAW=$(journalctl -u pvedaemon -u pveproxy | grep "authentication failure")
+GUI_OK=$(journalctl -u pvedaemon -u pveproxy | grep -c "successful auth")
+GUI_IPS=$(echo "$GUI_RAW" | sed -n 's/.*rhost=::ffff:\([^ ]*\) .*/\1/p')
+
+ALL_IPS_TOTAL=$(echo -e "$SSH_IPS\n$GUI_IPS" | grep -v '^$' | sort)
+TOTAL_ATTACKS=$(echo "$ALL_IPS_TOTAL" | wc -l)
+echo -e "${GREEN}Fatto.${NC}"
 
 get_country() {
-    local ip=$1
-    if [[ $ip == 192.168.* ]] || [[ $ip == 127.* ]]; then echo "LAN"
-    else curl -s "http://ip-api.com/csv/$ip?fields=country"; fi
+    local country=$(curl -s --max-time 1.2 "http://ip-api.com/csv/$1?fields=country")
+    echo "${country:-Unknown}"
 }
 
-# --- SEZIONE 1: TOP ATTACCANTI STORICI ---
-echo -e "\n[📊] TOP 10 NEMICI STORICI:"
-journalctl _SYSTEMD_UNIT=ssh.service | grep "Failed password" | sed -n 's/.*from \([^ ]*\) port.*/\1/p' | sort | uniq -c | sort -nr | head -n 10 | while read count ip; do
-    echo -e "$count\t$ip\t$(get_country $ip)"
-done
+# --- SEZIONE 2: NUOVE STATISTICHE GLOBALI ---
+echo -e "\n${CYAN}[🌐] STATISTICHE GLOBALI DI ACCESSO:${NC}"
+echo -e "  -> Tentativi Brute Force totali: ${RED}$TOTAL_ATTACKS${NC}"
+echo -e "  -> Login SSH Riusciti: ${GREEN}$SSH_OK${NC}"
+echo -e "  -> Login GUI Riusciti: ${GREEN}$GUI_OK${NC}"
+echo -ne "  -> Ultimo attacco rilevato: ${YELLOW}"
+journalctl -u ssh -u pvedaemon -u pveproxy | grep -E "Failed password|authentication failure" | tail -n 1 | awk '{print $1,$2,$3}'
+echo -ne "${NC}"
 
-# --- SEZIONE 2: ALLINEAMENTO BAN ---
-echo -e "\n[🔥] APPLICAZIONE BAN (Finestra: $FIND_TIME_JOURNAL)..."
-ips_to_ban=$(journalctl _SYSTEMD_UNIT=ssh.service --since "-$FIND_TIME_JOURNAL" | grep "Failed password" | sed -n 's/.*from \([^ ]*\) port.*/\1/p' | sort | uniq -c | awk -v limit="$MAX_RETRY" '$1 >= limit {print $2}')
-currently_banned=$(fail2ban-client status sshd | sed -n '/Banned IP list:/ s/.*Banned IP list:[ \t]*//p')
+# --- SEZIONE 3: TOP 5 PAESI ATTACCANTI ---
+echo -e "\n${CYAN}[🌍] TOP 5 NAZIONI ATTACCANTI:${NC}"
+# Estraiamo i paesi degli IP più frequenti (campionamento per velocità)
+echo "$ALL_IPS_TOTAL" | uniq -c | sort -nr | head -n 20 | awk '{print $2}' | while read ip; do
+    get_country "$ip"
+done | sort | uniq -c | sort -nr | head -n 5 | awk '{printf "  - %-15s %s tentativi\n", $2, $1}'
 
-for ip in $ips_to_ban; do
-    if [[ $ip == 192.168.* ]] ; then continue; fi
-    if [[ ! $currently_banned =~ $ip ]]; then
-        echo "  [+] PERMA-BAN: $ip ($(get_country $ip))"
-        fail2ban-client set sshd banip "$ip" > /dev/null
+# --- SEZIONE 4: TOP 10 + AUTO-BAN (Inalterata) ---
+echo -e "\n${YELLOW}[📊] TOP 10 ATTACCANTI E AZIONI CORRETTIVE:${NC}"
+echo -e "Prove\tIP\t\tNazione\t\tTarget\t\tStato/Azione"
+echo -e "------------------------------------------------------------------------"
+
+ALL_BANNED=""
+for jail in sshd proxmox; do ALL_BANNED+="$(fail2ban-client status $jail 2>/dev/null) "; done
+
+echo "$ALL_IPS_TOTAL" | uniq -c | sort -nr | head -n 10 | while read count ip; do
+    target="SSH"
+    echo "$GUI_IPS" | grep -q "$ip" && { echo "$SSH_IPS" | grep -q "$ip" && target="BOTH" || target="GUI"; }
+    
+    if [[ "$ALL_BANNED" =~ "$ip" ]]; then
+        status="${GREEN}[BANNED]${NC}"
+    else
+        jail_to_use="sshd"; [ "$target" != "SSH" ] && jail_to_use="proxmox"
+        fail2ban-client set $jail_to_use banip $ip >/dev/null 2>&1
+        status="${RED}[AUTO-BANNED]${NC}"
     fi
+
+    printf "%-8s %-15s %-15s %b%-10s%b \t %b\n" "$count" "$ip" "$(get_country "$ip")" "$NC" "$target" "$NC" "$status"
 done
 
-# --- SEZIONE 3: DETTAGLIO PRIGIONIERI ---
-echo -e "\n[🛡️] ATTUALMENTE IN PRIGIONE (PERMANENTE):"
-final_banned=$(fail2ban-client status sshd | sed -n '/Banned IP list:/ s/.*Banned IP list:[ \t]*//p')
+# --- SEZIONE 5: UTENZE ---
+echo -e "\n${YELLOW}[🎯] STATISTICHE UTENZE TOTALI:${NC}"
+echo -ne "  SSH: "; echo "$SSH_RAW" | sed -n 's/.*for \(invalid user \)\?\([^ ]*\) from.*/\2/p' | sort | uniq -c | sort -nr | head -n 5 | xargs
+echo -ne "  GUI: "; echo "$GUI_RAW" | sed -n 's/.*user=\([^ ]*\).*/\1/p' | cut -d' ' -f1 | sort | uniq -c | sort -nr | head -n 5 | xargs
 
-if [ -z "$final_banned" ]; then
-    echo "  Nessun IP in prigione."
-else
-    for ip in $final_banned; do
-        ip=$(echo $ip | tr -d ',')
-        [ -z "$ip" ] && continue
-        total_fails=$(journalctl _SYSTEMD_UNIT=ssh.service | grep "$ip" | grep "Failed password" | wc -l)
-        echo "  🚩 IP: $ip ($(get_country $ip)) | Totale tentativi: $total_fails"
-    done
-fi
+# --- SEZIONE 6: RIEPILOGO JAILS ---
+echo -e "\n${GREEN}[🛡️] STATO FINALE PROTEZIONE:${NC}"
+for jail in sshd proxmox; do
+    count_jail=$(fail2ban-client status $jail | sed -n '/Banned IP list:/ s/.*Banned IP list:[ \t]*//p' | wc -w)
+    echo -e "  -> Jail: $jail | Ban attivi: ${YELLOW}$count_jail${NC}"
+done
 
-echo -e "\n========================================================"
-echo "STATO: $(fail2ban-client status sshd | grep "Currently banned" | awk '{print $4}') IP bloccati per sempre."
-echo "========================================================"
+echo -e "\n${YELLOW}========================================================${NC}"
