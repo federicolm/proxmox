@@ -54,8 +54,20 @@ Il report inviato via email include:
    systemctl restart postfix
    postqueue -f
    ```
+5. **Installa fail2ban:**
+   ```bash
+   # apt install fail2ban
 
-4. **Esegui:**
+6. **Configura jail.local e proxmox.conf all'interno di /etc/fail2ban e /etc/fail2ban/filter.d/ :**
+   ```bash
+   mv jail.conf /etc/fail2ban/
+   mv proxmox.conf /etc/fail2ban/filter.d/
+
+7. **Riavvia il servizio fail2ban e controllane lo status :**
+   ```bash
+   systemctl enable --now fail2ban
+   
+8. **Esegui:**
    ```bash
    ./audit_ssh_gui.sh
 
