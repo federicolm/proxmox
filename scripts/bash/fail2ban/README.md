@@ -1,5 +1,9 @@
 # 🛡️ PVE & SSH Sentinel: Active Defense System
 
+[![Bash Script](https://img.shields.io/badge/language-Bash-4EAA25.svg?style=flat-square)](https://www.gnu.org/software/bash/)
+[![Proxmox VE](https://img.shields.io/badge/platform-Proxmox%20VE-E67E22.svg?style=flat-square)](https://www.proxmox.com)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
+
 **PVE Sentinel** è uno script bash avanzato per **Proxmox Virtual Environment** progettato per monitorare, analizzare e neutralizzare attacchi brute-force in tempo reale. Analizza i log di sistema (SSH e GUI Proxmox), identifica gli attaccanti più aggressivi e applica automaticamente il ban tramite Fail2Ban, generando infine un report grafico in HTML.
 
 
