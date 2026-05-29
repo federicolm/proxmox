@@ -1,42 +1,106 @@
-```markdown
-# Script di Aggiornamento Automatico Proxmox VE (PVE Daily Upgrade)
+# 🚀 Proxmox VE — Daily Automated Upgrade & Auto-Heal
 
-Questo script in Bash è progettato per automatizzare il processo quotidiano di aggiornamento del sistema su nodi Proxmox VE (sia macchine virtuali che nodi fisici), includendo avanzate routine di gestione dello spazio su disco, riparazione autonoma dei pacchetti bloccati e notifiche email differenziate.
+[![Bash Script](https://img.shields.io/badge/language-Bash-4EAA25.svg?style=flat-square)](https://www.gnu.org/software/bash/)
+[![Proxmox VE](https://img.shields.io/badge/platform-Proxmox%20VE-E67E22.svg?style=flat-square)](https://www.proxmox.com)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](https://opensource.org/licenses/MIT)
 
-## 🚀 Funzionalità Principali
+Un potente script Bash per l'automazione dei processi di manutenzione, pulizia e aggiornamento quotidiano dei nodi **Proxmox VE** (sia per installazioni fisiche che all'interno di macchine virtuali). 
 
-1. **Controllo e Riparazione Preventiva di APT/DPKG**: Prima di qualsiasi operazione, lo script controlla se la coda dei pacchetti è bloccata a causa di meta-pacchetti kernel rimansti "appesi" (stati di errore `iU`, `iF`, `iR`, `iH`). In caso positivo, ne forza la rimozione (`dpkg --purge --force-all`) per sbloccare il sistema in totale autonomia.
-2. **Monitoraggio dello Spazio su Disco**: Verifica lo spazio libero sulla partizione Root (`/`). Se lo spazio scende sotto la soglia minima impostata (`3000 MB`), avvia manovre di emergenza incrementali:
-   - Svuotamento della cache di `apt`.
-   - Rotazione forzata dei log di sistema (`journalctl` a 2 giorni e rimozione vecchi log compressi).
-   - Rimozione delle configurazioni residue dei vecchi kernel (`stato rc`).
-   - *Extrema Ratio*: Forza lo spostamento in stato automatico e la rimozione di tutti i kernel obsoleti non in uso, preservando rigorosamente solo il kernel attivo (`uname -r`).
-3. **Aggiornamento Sicuro**: Esegue un aggiornamento completo del sistema attraverso la sequenza `apt-get upgrade && apt-get dist-upgrade` in modalità non interattiva.
-4. **Allineamento Agnostico del Bootloader**: Al termine dell'installazione di un nuovo kernel, lo script rileva automaticamente se il sistema utilizza **GRUB** o **systemd-boot** (`proxmox-boot-tool`) ed esegue il refresh corretto del bootloader.
-5. **Notifiche Email Differenziate**: Invia report dettagliati tramite `mutt` differenziando i destinatari in base all'esito (Scenario A: nessun aggiornamento, Scenario B: aggiornamento riuscito/fallito o Errore Critico di spazio).
+Il core include meccanismi avanzati di **auto-healing** per sbloccare la coda APT in caso di kernel corrotti o interrotti, e routine ricorsive di **pulizia d'emergenza** se lo spazio su disco scende sotto la soglia di guardia.
 
 ---
 
-## 📂 Posizionamento dello Script
+## 📌 Indice
+- [Funzionalità Principali](#-funzionalità-principali)
+- [Architettura di Pulizia ed Emergenza](#-architettura-di-pulizia-ed-emergenza)
+- [Requisiti e Prerequisiti](#-requisiti-e-prerequisiti)
+- [Installazione e Configurazione](#-installazione-e-configurazione)
+- [Codice Sorgente Integrale](#-codice-sorgente-integrale)
+- [Logs e Debugging](#-logs-e-debugging)
 
-Per convenzione e sicurezza sui sistemi Linux/Proxmox, lo script deve essere posizionato in:
+---
 
-* **Percorso consigliato**: `/usr/local/bin/pve_upgrade_notify.sh`
-* **Permessi richiesti**: Dev'essere eseguibile ed eseguito come utente `root`.
+## ✨ Funzionalità Principali
 
-### Installazione rapida:
+* **Auto-Heal della Coda APT/DPKG**: Intercetta automaticamente meta-pacchetti kernel rimasti "appesi" o in stato di inconsistenza (`iU`, `iF`, `iR`, `iH`), applicando un `dpkg --purge --force-all` mirato per ripristinare il database dei pacchetti senza alcun intervento manuale.
+* **Allineamento Bootloader Agnostico**: Rileva dinamicamente se il nodo utilizza **GRUB** o **systemd-boot** (`proxmox-boot-tool`) applicando il corretto refresh dell'ambiente di boot al termine della rimozione dei vecchi kernel.
+* **Notifiche Email Scalabili**: Sfrutta `mutt` per inviare report differenziati ad amministratori e utenti in base allo scenario riscontrato (nessun aggiornamento, aggiornamento riuscito, fallimento o spazio insufficiente).
+
+---
+
+## 🛡️ Architettura di Pulizia ed Emergenza
+
+Quando lo spazio sulla root (`/`) scende sotto la soglia definita nella variabile `MIN_FREE_SPACE_MB` (Default: **3000 MB**), lo script esegue azioni di pulizia incrementali:
+
+| Fase | Target | Comando / Azione |
+| :--- | :--- | :--- |
+| **Fase 1** | Cache APT | `apt-get clean` |
+| **Fase 2** | Log di Sistema | `journalctl --vacuum-time=2d` + Rimozione forzata dei `.gz` in `/var/log` |
+| **Fase 3** | Configurazione Residue | Purge dei pacchetti in stato `rc` (vecchi file di configurazione kernel rimasti orfani) |
+| **Fase 4** | Moduli Orfani | Primo tentativo di `apt-get autoremove --purge` |
+| **Fase 5 (Extrema Ratio)** | Vecchi Kernel | `apt-mark auto` su tutti i kernel obsoleti (preservando rigorosamente il kernel attivo da `uname -r`) seguito da uno spurgo forzato dei moduli |
+
+> ⚠️ **Soglia Critica**: Se lo spazio residuo rimane inferiore a **1500 MB** dopo tutte le fasi di pulizia, il processo viene **interrotto preventivamente** e viene inviato un alert email critico all'amministratore per evitare il crash del nodo.
+
+---
+
+## 🛠️ Requisiti e Prerequisiti
+
+Prima di implementare lo script, assicurarsi che il sistema disponga dei seguenti applicativi già configurati:
+
+1. **Mutt**: Utilizzato per la composizione delle mail tramite CLI.
+2. **MTA di Sistema (Postfix / Sendmail)**: Postfix deve essere configurato (es. in modalità *Satellitare/Relay SMTP* con autenticazione) sul nodo per garantire il recapito dei messaggi verso domini esterni.
+3. **APT Repositories**: I file `sources.list` e `pve-enterprise.list` (o pve-no-subscription) devono essere allineati e non richiedere prompt interattivi.
+
+---
+
+## 📂 Installazione e Configurazione
+
+### 1. Posizionamento del file
+Lo script deve essere memorizzato nella directory dedicata agli applicativi locali:
 ```bash
-# Sostituisci il contenuto del file con lo script finale
 nano /usr/local/bin/pve_upgrade_notify.sh
+```
 
-# Assegna i permessi di esecuzione
-chmod +x /usr/local/bin/pve_upgrade_notify.sh
+### 2. Creazione service e timer
+Per schedulare correttamente lo script è consigliabile aggiungere un service per systemd ed un relativo timer che scatti ogni notte a mezzanotte (ad esempio).
 
-## Prerequisiti applicativi
-Lo script si aspetta che i seguenti applicativi e configurazioni siano già presenti e funzionanti sul nodo Proxmox:
+```bash
+nano /etc/systemd/system/pve-upgrade.service
+```
 
-Mutt (mutt): Utilizzato per la composizione e l'invio delle email. Lo script si aspetta che mutt sia installato.
+incollare il seguente codice per il service
 
-MTA di Sistema (Postfix / Sendmail): mutt si appoggia all'agente di trasporto della posta locale. Postfix deve essere configurato correttamente sul nodo Proxmox (es. in modalità Satellitare/Relay SMTP con autenticazione) per poter recapitare i messaggi verso gli indirizzi esterni configurati reali e funzionanti (es gmail, hotmail, etc.etc.etc.).
+```bash
+[Unit]
+Description=Proxmox VE Daily Automated Upgrade
+After=network-online.target
+Wants=network-online.target
 
-Repository APT Corretti: Lo script esegue comandi apt update ed è presupposto che i repository di Proxmox (No-Subscription o Enterprise) e di Debian siano configurati senza richiedere interazioni o prompt di conferma manuali.
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/pve_upgrade_notify.sh
+StandardOutput=journal
+StandardError=journal
+```
+
+per il timer
+
+```bash
+nano /etc/systemd/system/pve-upgrade.timer
+```
+
+incollare la seguente configurazione oppure sceglierne una più appropriata per le varie esigenze
+
+```bash
+[Unit]
+Description=Run Proxmox VE Daily Upgrade at Midnight
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+Unit=pve-upgrade.service
+
+[Install]
+WantedBy=timers.target
+```
