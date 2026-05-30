@@ -29,7 +29,7 @@ Il report inviato via email include:
 1. **Scarica lo script:**
    ```bash
    wget https://github.com/federicolm/proxmox/blob/develop/scripts/bash/fail2ban/audit_ssh.sh
-   chmod +x audit_ssh_gui.sh
+   chmod 740 audit_ssh_gui.sh
 
 2. **Configura la tua email:**
    ```bash
