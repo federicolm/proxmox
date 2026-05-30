@@ -48,7 +48,7 @@ Il report inviato via email include:
    smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
    smtp_use_tls = yes
    ```
-   attento ai doppio di 
+   attento alla duplicazione dell'istruzione di 
    ```bash
    relayhost = 
    ```
