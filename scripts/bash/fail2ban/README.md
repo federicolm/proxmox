@@ -64,7 +64,7 @@ Il report inviato via email include:
 
 6. **Configura jail.local e proxmox.conf all'interno di /etc/fail2ban e /etc/fail2ban/filter.d/ :**
    ```bash
-   mv jail.conf /etc/fail2ban/
+   mv jail.local /etc/fail2ban/
    mv proxmox.conf /etc/fail2ban/filter.d/
 
 7. **Riavvia il servizio fail2ban e controllane lo status :**
