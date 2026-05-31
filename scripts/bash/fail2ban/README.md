@@ -75,14 +75,45 @@ Il report inviato via email include:
    ```bash
    ./audit_ssh_gui.sh
 
-## 📅 Automazione (Cronjob)
-Per ricevere il report di sicurezza ogni lunedì mattina alle 08:00, aggiungi questa riga al tuo crontab di root:
+## 📅 Automazione (service per systemd)
+Per ricevere il report di sicurezza ogni lunedì mattina alle 08:00, bisogna creare un service per systemd con la configurazione del relativo timer:
 
 ```Bash
-crontab -e
-# Aggiungi in fondo:
-00 08 * * 1 /root/audit_ssh_gui.sh > /dev/null 2>&1
+cat << 'EOF' >> /etc/systemd/system/pve-sentinel.service
+[Unit]
+Description=Script di protezione e reportistica quotidiano Proxmox VE basato su fail2ban
+After=network-online.target postfix.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/root/audit_ssh_gui.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+cat << 'EOF' >> /etc/systemd/system/pve-sentinel.timer
+[Unit]
+Description=Avvia la protezione e la reportistica di PVE Sentinel ogni notte a mezzanotte
+
+[Timer]
+OnCalendar=*-*-* 00:00:00
+Persistent=true
+Unit=pve-sentinel.service
+
+[Install]
+WantedBy=timers.target
+EOF
 ```
+
+al termine eseguire : 
+
+```Bash
+systemctl enable --now pve-sentinel.service
+systemctl enable --now pve-sentinel.timer
+```
+
 ## 🛠️ Requisiti
 * **Sistema Operativo**: Proxmox VE 7.x, 8.x o 9.x.
 * **Servizi**: Fail2Ban installato e attivo con le jail `sshd` e `proxmox`.
