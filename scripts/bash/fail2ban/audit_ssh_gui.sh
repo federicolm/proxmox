@@ -107,9 +107,30 @@ echo "</ul></div></body></html>"
 # ========================================================
 
 if [ -f "$REPORT_HTML" ]; then
-    # Inviamo il file HTML come allegato. Mutt capirà il tipo di file.
-    echo "In allegato il Security Audit a colori per Proxmox." | mutt -e "set content_type=text/html" -s "Sentinel Security Audit - $(hostname)" -a "$REPORT_HTML" -- "$EMAIL"
-    echo -e "\e[32m[+] Report a colori inviato correttamente a $EMAIL\e[0m"
+    # Normalizza gli indirizzi email: sostituisce virgole/punti e virgola con spazi
+    EMAIL_LIST=$(echo "$EMAIL" | tr ',;' ' ')
+    
+    # Conta il numero di email valide
+    EMAIL_COUNT=0
+    for email in $EMAIL_LIST; do
+        if [[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+            EMAIL_COUNT=$((EMAIL_COUNT + 1))
+        fi
+    done
+    
+    if [ $EMAIL_COUNT -eq 0 ]; then
+        echo -e "\e[31m[-] Nessun indirizzo email valido specificato.\e[0m"
+    else
+        # Invia il report a ciascun indirizzo email
+        for email in $EMAIL_LIST; do
+            if [[ "$email" =~ ^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$ ]]; then
+                echo "In allegato il Security Audit a colori per Proxmox." | mutt -e "set content_type=text/html" -s "Sentinel Security Audit - $(hostname)" -a "$REPORT_HTML" -- "$email"
+                echo -e "\e[32m[+] Report inviato correttamente a $email\e[0m"
+            else
+                echo -e "\e[33m[!] Indirizzo email non valido: $email\e[0m"
+            fi
+        done
+    fi
     # Opzionale: lascia il file HTML per consultazione locale o cancellalo
     # rm "$REPORT_HTML"
 else
