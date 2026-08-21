@@ -49,7 +49,7 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 ---
 
 
-## 🎯 Regole di Selezione e Conservazione
+## 🎯Regole di Selezione e Conservazione
 
 1. **In Esecuzione (`uname -r`)**: La versione attiva sul sistema viene sempre protetta.
 2. **Precedente (`grep -B 1`)**: La versione antecedente a quella in esecuzione viene preservata come ripristino d'emergenza.
@@ -58,7 +58,7 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 
 ---
 
-## 🛡️ Architettura di Pulizia ed Emergenza
+## 🛡️Architettura di Pulizia ed Emergenza
 
 Quando lo spazio sulla root (`/`) scende sotto la soglia definita nella variabile `MIN_FREE_SPACE_MB` (Default: **3000 MB**), lo script esegue azioni di pulizia incrementali:
 
