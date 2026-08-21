@@ -1,7 +1,3 @@
-Ecco la versione del **`README.md`** arricchita con lo stile visivo, le icone, i badge avanzati (Shields.io) e i box evidenziati (`> 💡`, `> ⚠️`) presenti nella precedente versione, **senza perdere nemmeno un dettaglio** di tutte le nuove sezioni tecniche, fix e diagnostiche.
-
----
-
 ```markdown
 <div align="center">
 
