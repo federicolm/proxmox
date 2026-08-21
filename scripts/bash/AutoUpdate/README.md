@@ -44,8 +44,10 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
        [ Kernel Obsoleti ]           [ Safety Fallback ]         [ Active Running ]         [ Nuovi / Futuri ]
  (Rimossi completamente)        ---> (Versione Precedente) ---> (Kernel uname -r) ---> (Installati no Reboot)
            [ELIMINATI]                   [CONSERVATO]               [CONSERVATO]               [CONSERVATI]
-
 ```
+
+---
+
 
 ## 🎯 Regole di Selezione e Conservazione
 
