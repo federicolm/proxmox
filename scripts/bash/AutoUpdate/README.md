@@ -14,7 +14,7 @@ Il core include una **logica avanzata e chirurgica per la gestione dei kernel**,
 - [✨ Funzionalità Principali](#-funzionalità-principali)
 - [🧠 Algoritmo di Gestione e Pulizia dei Kernel](#-algoritmo-di-gestione-e-pulizia-dei-kernel)
 - [🎯 Regole di Selezione e Conservazione](#-regole-di-selezione-e-conservazione)
-- [🛡️ Architettura di Pulizia ed Emergenza](#architettura-di-pulizia-ed-emergenza)
+- [🚨 Architettura di Pulizia ed Emergenza](#architettura-di-pulizia-ed-emergenza)
 - [🛠️ Requisiti, Dipendenze e Configurazioni Mail](#-requisiti-dipendenze-e-configurazioni-mail)
   - [1. Installazione Dipendenze](#1-installazione-delle-dipendenze)
   - [2. Configurazione Postfix (Relay SMTP)](#2-configurazione-di-postfix-relay-smtp-satellitare)
@@ -57,8 +57,7 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 
 ---
 
-<a id="architettura-pulizia"></a>
-## 🛡️ Architettura di Pulizia ed Emergenza
+## 🚨 Architettura di Pulizia ed Emergenza
 
 Quando lo spazio sulla root (`/`) scende sotto la soglia definita nella variabile `MIN_FREE_SPACE_MB` (Default: **3000 MB**), lo script esegue azioni di pulizia incrementali:
 
