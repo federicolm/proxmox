@@ -4,25 +4,46 @@
 [![Proxmox VE](https://img.shields.io/badge/platform-Proxmox%20VE-E67E22.svg?style=flat-square)](https://www.proxmox.com)
 [![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-**PVE Sentinel** è uno script bash avanzato per **Proxmox Virtual Environment** progettato per monitorare, analizzare e neutralizzare attacchi brute-force in tempo reale. Analizza i log di sistema (SSH e GUI Proxmox), identifica gli attaccanti più aggressivi e applica automaticamente il ban tramite Fail2Ban, generando infine un report grafico in HTML.
+**PVE Sentinel** è un motore di **Retroactive Enforcement** e **Threat Intelligence Reporting** per Proxmox Virtual Environment.
 
+> 💡 **Perché questo script è fondamentale?**  
+> Fail2Ban blocca gli attacchi *in tempo reale*, ma ignora completamente gli attacchi avvenuti *prima* della sua attivazione o durante i riavvii del servizio.  
+> **PVE Sentinel colma questo buco di sicurezza**: analizza lo storico profondo dei log di sistema (`journalctl`), individua gli IP che hanno tentato attacchi massivi nel passato e **forza Fail2Ban ad applicare il ban retroattivo**, generando contestualmente un report visuale avanzato.
 
+---
+
+### ⚡ PVE Sentinel vs Fail2Ban Standalone
+
+| Funzionalità | Fail2Ban Standard | PVE Sentinel + Fail2Ban |
+| :--- | :---: | :---: |
+| **Protezione In Tempo Reale** | ✅ | ✅ |
+| **Ban Retroattivo (Storico Log)** | ❌ | ✅ |
+| **Cross-Service Intelligence** *(Incrocio SSH + Web GUI)* | ❌ | ✅ |
+| **Geolocalizzazione IP (GeoIP)** | ❌ | ✅ |
+| **Report Grafico Email (Dark Dashboard)** | ❌ | ✅ |
+| **Analisi dei Target** *(Utenti presi di mira)* | ❌ | ✅ |
+
+---
 
 ## ✨ Caratteristiche principali
 
-* **Analisi Deep History**: Scansione completa di tutta la cronologia del Journal (non solo le ultime ore).
-* **Auto-Ban Intelligente**: Rileva gli IP con migliaia di tentativi falliti e li aggiunge istantaneamente alle jail di Fail2Ban (`sshd` o `proxmox`).
-* **Geolocalizzazione**: Identifica la nazione di provenienza dei Top 10 attaccanti.
-* **Target Intelligence**: Distingue tra attacchi rivolti alla Web GUI e quelli al servizio SSH.
-* **Report Grafico Email**: Genera un report HTML elegante con tema "Dark Dashboard" e lo invia via email tramite Mutt/Postfix.
+* **Analisi Retroattiva (Deep History)**: Scansione completa del Journal di `systemd` per intercettare ed eliminare gli attacchi avvenuti prima dell'attivazione di Fail2Ban.
+* **Auto-Ban Intelligente**: Rileva gli IP con centinaia o migliaia di tentativi falliti e forza il ban istantaneo nelle jail (`sshd` o `proxmox`).
+* **Geolocalizzazione**: Identifica la nazione di provenienza dei principali IP attaccanti.
+* **Target Intelligence**: Incrocia i dati per distinguere chi attacca la Web GUI, il servizio SSH o entrambi (`BOTH`).
+* **Report Grafico Email**: Genera un report HTML elegante con tema "Dark Dashboard" inviato tramite Mutt e Postfix.
 * **Zero Dipendenze Manuali**: Lo script verifica e installa automaticamente tutti i pacchetti necessari (`curl`, `mutt`, `sqlite3`, ecc.).
+
+---
 
 ## 📊 Anteprima del Report
 Il report inviato via email include:
 - **Global Stats**: Totale attacchi respinti vs login riusciti.
-- **Top 5 Nations**: Classifica dei paesi più ostili.
-- **Top 10 Offenders**: Lista dettagliata degli IP, numero di prove e stato del ban.
-- **Targeted Users**: Elenco dei nomi utente più tentati dai bot.
+- **Top 5 Nations**: Classifica dei paesi da cui provengono le minacce.
+- **Top 10 Offenders**: Lista dettagliata degli IP, numero di tentativi, nazione, target e stato del ban.
+- **Targeted Users**: Elenco dei nomi utente più mirati dai botnet.
+
+---
 
 ## 🚀 Installazione Rapida
 
