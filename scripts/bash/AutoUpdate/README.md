@@ -1,20 +1,16 @@
-```markdown
-<div align="center">
-
 # 🚀 Proxmox VE — Daily Automated Upgrade & Smart Kernel Manager
 
-[![Bash Script](https://img.shields.io/badge/Language-Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
-[![Proxmox VE](https://img.shields.io/badge/Platform-Proxmox%20VE%208%2B-E67E22?style=for-the-badge&logo=proxmox&logoColor=white)](https://www.proxmox.com)
-[![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.html)
-[![Status](https://img.shields.io/badge/Maintained%3F-Yes-success?style=for-the-badge)](https://github.com/federicolm/proxmox)
+[![Bash Script](https://img.shields.io/badge/language-Bash-4EAA25.svg?style=flat-square)](https://www.gnu.org/software/bash/)
+[![Proxmox VE](https://img.shields.io/badge/platform-Proxmox%20VE-E67E22.svg?style=flat-square)](https://www.proxmox.com)
+[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
 
-*Script di automazione professionale per la manutenzione quotidiana, la gestione chirurgica dei kernel, la risoluzione automatica delle incoerenze APT/DPKG e la notifica via email per nodi Proxmox VE.*
+Un potente script Bash per l'automazione dei processi di manutenzione, pulizia e aggiornamento quotidiano dei nodi **Proxmox VE** (sia per installazioni fisiche che all'interno di macchine virtuali). 
 
-</div>
+Il core include una **logica avanzata e chirurgica per la gestione dei kernel**, meccanismi di **auto-healing** per sbloccare la coda APT in caso di pacchetti corrotti, e routine ricorsive di **pulizia d'emergenza** se lo spazio su disco scende sotto la soglia di guardia.
 
 ---
 
-## 📋 Indice
+## 📌 Indice
 - [✨ Funzionalità Principali](#-funzionalità-principali)
 - [🧠 Algoritmo di Gestione e Pulizia dei Kernel](#-algoritmo-di-gestione-e-pulizia-dei-kernel)
 - [🛡️ Architettura di Pulizia ed Emergenza](#-architettura-di-pulizia-ed-emergenza)
