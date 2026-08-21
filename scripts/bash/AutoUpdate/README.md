@@ -13,6 +13,7 @@ Il core include una **logica avanzata e chirurgica per la gestione dei kernel**,
 ## 📌 Indice
 - [✨ Funzionalità Principali](#-funzionalità-principali)
 - [🧠 Algoritmo di Gestione e Pulizia dei Kernel](#-algoritmo-di-gestione-e-pulizia-dei-kernel)
+- [🎯 Regole di Selezione e Conservazione](#-regole-di-selezione-e-conservazione)
 - [🛡️ Architettura di Pulizia ed Emergenza](#-architettura-di-pulizia-ed-emergenza)
 - [🛠️ Requisiti, Dipendenze e Configurazioni Mail](#-requisiti-dipendenze-e-configurazioni-mail)
   - [1. Installazione Dipendenze](#1-installazione-delle-dipendenze)
@@ -46,7 +47,7 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 
 ```
 
-### 🎯 Regole di Selezione e Conservazione
+## 🎯 Regole di Selezione e Conservazione
 
 1. **In Esecuzione (`uname -r`)**: La versione attiva sul sistema viene sempre protetta.
 2. **Precedente (`grep -B 1`)**: La versione antecedente a quella in esecuzione viene preservata come ripristino d'emergenza.
