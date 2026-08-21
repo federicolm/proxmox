@@ -57,7 +57,7 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 
 ---
 
-## 🛡️Architettura di Pulizia ed Emergenza
+## 🛡️ Architettura di Pulizia ed Emergenza
 
 Quando lo spazio sulla root (`/`) scende sotto la soglia definita nella variabile `MIN_FREE_SPACE_MB` (Default: **3000 MB**), lo script esegue azioni di pulizia incrementali:
 
