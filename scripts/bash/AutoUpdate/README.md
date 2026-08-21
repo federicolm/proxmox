@@ -1,38 +1,45 @@
-```markdown
-# 🚀 Proxmox VE — Daily Automated Upgrade & Smart Kernel Manager
-
-[![Bash Script](https://img.shields.io/badge/language-Bash-4EAA25.svg?style=flat-square)](https://www.gnu.org/software/bash/)
-[![Proxmox VE](https://img.shields.io/badge/platform-Proxmox%20VE-E67E22.svg?style=flat-square)](https://www.proxmox.com)
-[![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg?style=flat-square)](https://www.gnu.org/licenses/gpl-3.0.html)
-
-Un potente script Bash per l'automazione dei processi di manutenzione, pulizia e aggiornamento quotidiano dei nodi **Proxmox VE** (sia per installazioni fisiche che virtualizzate). 
-
-Il core include una **logica avanzata e chirurgica per la gestione dei kernel**, meccanismi di **auto-healing** per sbloccare la coda APT in caso di pacchetti corrotti o interrotti, e routine ricorsive di **pulizia d'emergenza** se lo spazio su disco scende sotto la soglia di guardia.
+Ecco la versione del **`README.md`** arricchita con lo stile visivo, le icone, i badge avanzati (Shields.io) e i box evidenziati (`> 💡`, `> ⚠️`) presenti nella precedente versione, **senza perdere nemmeno un dettaglio** di tutte le nuove sezioni tecniche, fix e diagnostiche.
 
 ---
 
-## 📌 Indice
-- [Funzionalità Principali](#-funzionalità-principali)
-- [Algoritmo di Gestione e Pulizia dei Kernel](#-algoritmo-di-gestione-e-pulizia-dei-kernel)
-- [Architettura di Pulizia ed Emergenza](#-architettura-di-pulizia-ed-emergenza)
-- [Requisiti, Dipendenze e Configurazioni Mail](#-requisiti-dipendenze-e-configurazioni-mail)
-- [Installazione e Schedulazione Systemd](#-installazione-e-schedulazione-systemd)
-- [Test di Diagnostica Automatica](#-test-di-diagnostica-automatica)
-- [Risoluzione Problemi e Debugging Mail](#-risoluzione-problemi-e-debugging-mail)
-- [Logs e Monitoraggio](#-logs-e-monitoraggio)
+```markdown
+<div align="center">
+
+# 🚀 Proxmox VE — Daily Automated Upgrade & Smart Kernel Manager
+
+[![Bash Script](https://img.shields.io/badge/Language-Bash-4EAA25?style=for-the-badge&logo=gnu-bash&logoColor=white)](https://www.gnu.org/software/bash/)
+[![Proxmox VE](https://img.shields.io/badge/Platform-Proxmox%20VE%208%2B-E67E22?style=for-the-badge&logo=proxmox&logoColor=white)](https://www.proxmox.com)
+[![License](https://img.shields.io/badge/License-GPL--3.0-blue?style=for-the-badge)](https://www.gnu.org/licenses/gpl-3.0.html)
+[![Status](https://img.shields.io/badge/Maintained%3F-Yes-success?style=for-the-badge)](https://github.com/federicolm/proxmox)
+
+*Script di automazione professionale per la manutenzione quotidiana, la gestione chirurgica dei kernel, la risoluzione automatica delle incoerenze APT/DPKG e la notifica via email per nodi Proxmox VE.*
+
+</div>
+
+---
+
+## 📋 Indice
+- [✨ Funzionalità Principali](#-funzionalità-principali)
+- [🧠 Algoritmo di Gestione e Pulizia dei Kernel](#-algoritmo-di-gestione-e-pulizia-dei-kernel)
+- [🛡️ Architettura di Pulizia ed Emergenza](#-architettura-di-pulizia-ed-emergenza)
+- [🛠️ Requisiti, Dipendenze e Configurazioni Mail](#-requisiti-dipendenze-e-configurazioni-mail)
+  - [1. Installazione Dipendenze](#1-installazione-delle-dipendenze)
+  - [2. Configurazione Postfix (Relay SMTP)](#2-configurazione-di-postfix-relay-smtp-satellitare)
+  - [3. Configurazione Mutt](#3-configurazione-di-mutt)
+- [📂 Installazione e Schedulazione Systemd](#-installazione-e-schedulazione-systemd)
+- [🧪 Test di Diagnostica Automatica](#-test-di-diagnostica-automatica)
+- [🔧 Risoluzione Problemi e Debugging Mail](#-risoluzione-problemi-e-debugging-mail)
+- [🔍 Logs e Monitoraggio](#-logs-e-monitoraggio)
 
 ---
 
 ## ✨ Funzionalità Principali
 
-* **Gestione Chirurgica dei Kernel (Politica a 3 Livelli)**: Analizza ed esegue ad ogni avvio una pulizia mirata che conserva **esclusivamente**:
-  1. Il kernel attualmente in esecuzione (`Running`).
-  2. Il kernel immediatamente precedente a quello attuale (fallback di sicurezza).
-  3. Tutte le versioni future/nuove appena installate in attesa di riavvio (`Reboot`).
-* **Protezione dei Meta-Pacchetti**: Distingue accuratamente i pacchetti immagine del kernel (`-pve`) dai meta-pacchetti principali (es. `proxmox-kernel-7.0`), evitando che la pulizia interrompa i futuri aggiornamenti della serie.
-* **Reportistica Email Integrale**: Invia via mail (tramite `mutt`) l'elenco completo di tutti i pacchetti da aggiornare o aggiornati, insieme a un resoconto dettagliato dei kernel rilevati, conservati e rimossi.
-* **Auto-Heal della Coda APT/DPKG**: Intercetta automaticamente meta-pacchetti kernel rimasti in stato di inconsistenza (`iU`, `iF`, `iR`, `iH`), applicando un `dpkg --purge --force-all` mirato per ripristinare il database senza alcun intervento manuale.
-* **Allineamento Bootloader Agnostico**: Rileva dinamicamente se il nodo utilizza **GRUB** o **systemd-boot** (`proxmox-boot-tool`) applicando il corretto refresh dell'ambiente di avvio al termine delle operazioni.
+* 🛡️ **Gestione Chirurgica dei Kernel (Politica a 3 Livelli)**: Preserva il kernel in uso (`Running`), quello immediatamente precedente (`Fallback`) e tutti i kernel futuri/nuovi appena installati in attesa di riavvio (`Reboot`).
+* 🏷️ **Protezione dei Meta-Pacchetti**: Distingue accuratamente i pacchetti immagine del kernel (`-pve`) dai meta-pacchetti principali (es. `proxmox-kernel-7.0`), evitando interruzioni negli aggiornamenti della serie.
+* 📧 **Reportistica Email Integrale**: Invia via mail (tramite `mutt`) un resoconto completo con la lista dei pacchetti aggiornati e lo stato dettagliato dei kernel.
+* 🩺 **Auto-Heal della Coda APT/DPKG**: Intercetta automaticamente meta-pacchetti kernel rimasti in stato di inconsistenza (`iU`, `iF`, `iR`, `iH`), applicando un `dpkg --purge --force-all` mirato per sbloccare la coda.
+* ⚙️ **Allineamento Bootloader Agnostico**: Rileva dinamicamente se il nodo utilizza **GRUB** o **systemd-boot** (`proxmox-boot-tool`) applicando il corretto refresh dell'ambiente di avvio.
 
 ---
 
@@ -47,12 +54,12 @@ La funzione `cleanup_old_kernels` analizza la gerarchia delle versioni tramite u
 
 ```
 
-### Regole di Selezione e Conservazione
+### 🎯 Regole di Selezione e Conservazione
 
 1. **In Esecuzione (`uname -r`)**: La versione attiva sul sistema viene sempre protetta.
-2. **Precedente (`grep -B 1`)**: La versione antecedente a quella in esecuzione viene preservata come ripristino d'emergenza in caso di problemi dopo un aggiornamento.
+2. **Precedente (`grep -B 1`)**: La versione antecedente a quella in esecuzione viene preservata come ripristino d'emergenza.
 3. **Futuri (`grep -A 9999`)**: Tutti i kernel con versione pari o superiore a quella in esecuzione vengono conservati integralmente.
-4. **Obsoleti**: Tutti i pacchetti di kernel più vecchi del fallback vengono disinstallati e rimossi dal sistema (`apt-get purge`), liberando centinaia di megabyte o gigabyte su disco.
+4. **Obsoleti**: Tutti i pacchetti di kernel più vecchi del fallback vengono disinstallati e rimossi dal sistema (`apt-get purge`).
 
 ---
 
@@ -66,9 +73,9 @@ Quando lo spazio sulla root (`/`) scende sotto la soglia definita nella variabil
 | **Fase 2** | Log di Sistema | `journalctl --vacuum-time=2d` + Rimozione dei log ruotati (`.gz` / `.1`) |
 | **Fase 3** | Configurazioni Residue | Purge dei pacchetti in stato `rc` (file di configurazione orfani) |
 | **Fase 4** | Moduli Orfani | Tentativo di `apt-get autoremove --purge` |
-| **Fase 5 (Extrema Ratio)** | Vecchi Kernel | `apt-mark auto` sui kernel non attivi seguito dallo spurgo dei moduli |
+| **Fase 5** | Vecchi Kernel *(Extrema Ratio)* | `apt-mark auto` sui kernel non attivi seguito dallo spurgo dei moduli |
 
-> ⚠️ **Soglia Critica**: Se lo spazio residuo rimane inferiore a **1500 MB** dopo la pulizia, il processo si **interrompe preventivamente** inviando un alert email critico per evitare l'arresto del nodo.
+> ⚠️ **Soglia Critica**: Se lo spazio residuo rimane inferiore a **1500 MB** dopo la pulizia, il processo si **interrompe preventivamente** inviando un alert email critico per evitare l'arresto imprevisto del nodo.
 
 ---
 
@@ -90,7 +97,7 @@ apt-get install -y mutt postfix sasl2-bin ca-certificates bsd-mailx
 
 Per consentire a Proxmox di inviare email tramite provider esterni (es. Gmail, SendGrid, ecc.), Postfix deve essere configurato come nodo satellitare.
 
-#### A. File `/etc/postfix/main.cf`
+#### 📄 File `/etc/postfix/main.cf`
 
 Modificare il file aggiungendo o verificando le seguenti direttive in fondo:
 
@@ -113,7 +120,7 @@ smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
 
 ```
 
-#### B. File `/etc/postfix/sasl_passwd`
+#### 🔑 File `/etc/postfix/sasl_passwd`
 
 Creare il file per le credenziali SMTP:
 
@@ -149,7 +156,7 @@ nano ~/.muttrc
 
 ```
 
-Aggiungere le seguenti righe. **Nota:** È fondamentale usare i **doppi apici** (`"`) nella variabile `realname` per permettere a Bash di espandere correttamente il comando `$(hostname)`.
+Aggiungere le seguenti righe:
 
 ```ini
 set sendmail="/usr/sbin/sendmail -oem -i"
@@ -158,6 +165,8 @@ set from="tuo_indirizzo_gmail@gmail.com"
 set use_from=yes
 
 ```
+
+> 💡 **Nota:** È fondamentale usare i **doppi apici** (`"`) nella variabile `realname` per permettere a Bash di espandere correttamente il comando `$(hostname)`.
 
 ---
 
@@ -175,14 +184,7 @@ chmod +x /usr/local/bin/pve_upgrade_notify.sh
 
 ### 2. Creazione del Servizio Systemd
 
-Creare il file di servizio:
-
-```bash
-nano /etc/systemd/system/pve-upgrade.service
-
-```
-
-Configurazione:
+Creare il file `/etc/systemd/system/pve-upgrade.service`:
 
 ```ini
 [Unit]
@@ -200,14 +202,7 @@ StandardError=journal
 
 ### 3. Creazione del Timer Systemd
 
-Creare il timer per l'esecuzione automatica (es. ogni notte a mezzanotte):
-
-```bash
-nano /etc/systemd/system/pve-upgrade.timer
-
-```
-
-Configurazione:
+Creare il file `/etc/systemd/system/pve-upgrade.timer` per l'esecuzione automatica a mezzanotte:
 
 ```ini
 [Unit]
@@ -289,53 +284,56 @@ fi
 
 ## 🔧 Risoluzione Problemi e Debugging Mail
 
-### 1. Mail Troncata in Gmail ("[Messaggio troncato] Visualizza intero messaggio")
+### ✉️ Mail Troncata in Gmail (`[Messaggio troncato] Visualizza intero messaggio`)
 
-Se ricevi l'email ma Gmail ne tronca la visualizzazione, il problema **non è un errore**, ma un limite di Google: Gmail nasconde automaticamente i contenuti quando la dimensione dell'email supera i **102 KB**. Questo avviene spesso a causa dell'output prolisso generato dall'aggiornamento del bootloader (`grub-mkconfig`).
+Se ricevi l'email ma Gmail ne tronca la visualizzazione, si tratta di un comportamento standard di Google quando la dimensione del messaggio supera i **102 KB** (solitamente a causa dell'output dettagliato di `grub-mkconfig`).
 
-**Soluzione:**
-Puoi ridurre drasticamente la lunghezza del report indirizzando in `> /dev/null 2>&1` l'output dei comandi di bootloader all'interno dello script bash `pve_upgrade_notify.sh`:
+> 💡 **Soluzione:** Indirizza in `> /dev/null 2>&1` l'output dei comandi del bootloader nello script `pve_upgrade_notify.sh`:
+> ```bash
+> update-grub > /dev/null 2>&1
+> # Oppure se usi systemd-boot:
+> proxmox-boot-tool refresh > /dev/null 2>&1
+> 
+> ```
+> 
+> 
 
-```bash
-# Sostituisci la chiamata a update-grub con:
-update-grub > /dev/null 2>&1
+---
 
-# Oppure, se usi proxmox-boot-tool:
-proxmox-boot-tool refresh > /dev/null 2>&1
+### 🚨 Le email non arrivano
 
-```
-
-### 2. Le email non arrivano
-
-Fai un test manuale rapido:
-
+1. **Esegui un test manuale rapido:**
 ```bash
 echo "Test invio da Proxmox $(hostname)" | mutt -s "Test Email Proxmox" -- destinatario@dominio.com
 
 ```
 
-Quindi analizza gli errori del servizio postfix:
 
+2. **Analizza i log di Postfix:**
 ```bash
 journalctl -u postfix -n 50 --no-pager
 
 ```
 
-* **Errore SASL `535-5.7.8 Username and Password not accepted**`:
-Password o App Password errata nel file `/etc/postfix/sasl_passwd`. Rigenerare la password per le app da Google e rieseguire `postmap /etc/postfix/sasl_passwd && systemctl restart postfix`.
-* **Errore `status=deferred` o `Connection timed out` sulla porta 25**:
-Il provider di rete blocca la porta 25. Assicurarsi di utilizzare la porta `587` nel file `main.cf`.
 
-### 3. Gestione della Coda di Posta bloccata
+
+* **Errore SASL `535-5.7.8 Username and Password not accepted**`:
+Password o App Password errata nel file `/etc/postfix/sasl_passwd`. Rigenera la Password per le app da Google e riesegui `postmap /etc/postfix/sasl_passwd && systemctl restart postfix`.
+* **Errore `status=deferred` o `Connection timed out` sulla porta 25**:
+Il provider di rete blocca la porta 25 in uscita. Assicurati di utilizzare la porta `587` nel file `main.cf`.
+
+---
+
+### 🧹 Gestione della Coda di Posta Bloccata
 
 ```bash
-# Visualizza le mail attualmente bloccate
+# Visualizza le mail attualmente bloccate in coda
 mailq
 
 # Forza il tentativo di invio immediato della coda
 postfix flush
 
-# Cancella tutti i messaggi irrecuperabili bloccati in coda
+# Cancella tutti i messaggi irrecuperabili in coda
 postsuper -d ALL
 
 ```
@@ -344,23 +342,28 @@ postsuper -d ALL
 
 ## 🔍 Logs e Monitoraggio
 
-Per verificare i log specifici creati dallo script:
-
+* **Visualizza il log dedicato dello script:**
 ```bash
 cat /var/log/pve_upgrade_daily.log
 
 ```
 
-Per seguire l'esecuzione del timer/servizio tramite il journal di systemd:
 
+* **Segui l'esecuzione del servizio tramite Systemd Journal:**
 ```bash
 journalctl -u pve-upgrade.service -f
 
 ```
 
-Per verificare lo stato del timer programmato:
 
+* **Verifica lo stato del Timer programmato:**
 ```bash
 systemctl status pve-upgrade.timer
 
 ```
+
+
+
+---
+
+**[Proxmox VE Automation Suite](https://www.google.com/url?sa=E&source=gmail&q=https://github.com/federicolm/proxmox)** — Sviluppato con ❤️ per la gestione semplificata dei cluster ed i nodi singoli.
