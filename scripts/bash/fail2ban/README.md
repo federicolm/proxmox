@@ -91,8 +91,12 @@ Il report inviato via email include:
 7. **Riavvia il servizio fail2ban e controllane lo status :**
    ```bash
    systemctl enable --now fail2ban
+
+8. **Installa le dipendenze :**
+   ```bash
+   apt update && apt install -y python3 geoip-bin mutt fail2ban
    
-8. **Esegui:**
+9. **Esegui:**
    ```bash
    ./audit_ssh_gui.sh
 
@@ -137,8 +141,12 @@ systemctl enable --now pve-sentinel.timer
 
 ## 🛠️ Requisiti
 * **Sistema Operativo**: Proxmox VE 7.x, 8.x o 9.x.
-* **Servizi**: Fail2Ban installato e attivo con le jail `sshd` e `proxmox`.
-* **Email**: Postfix configurato correttamente (consigliato l'uso di un Relay SMTP come Gmail).
+* **Servizi di Sicurezza**: Fail2Ban installato e attivo con le jail `sshd` e `proxmox`.
+* **Mail Transfer Agent (MTA)**: Postfix configurato correttamente (consigliato l'uso di un Relay SMTP come Gmail).
+* **Dipendenze Software**:
+   * **python3**: Per il parsing rapido dei log, la gestione del JSON e la generazione dei dati del grafico.
+   * **mutt**: Per la gestione e l'invio delle email HTML con allegato.
+   * **geoip-bin (o geoip-database)**: Per la risoluzione geografica degli indirizzi IP tramite geoiplookup. 
 
 ## 🛡️ Sicurezza
 Lo script richiede privilegi di root per poter leggere i log di sistema (journalctl) e interagire con fail2ban-client per eseguire i ban.
