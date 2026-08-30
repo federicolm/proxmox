@@ -14,6 +14,29 @@ CURRENT_DATE_STR=$(date +"%d%m%Y-%H%M")
 REPORT_HTML="/tmp/pve_sentinel_${CURRENT_DATE_STR}.html"
 
 # ------------------------------------------------------------------------------
+# VERIFICA DIPENDENZE PACCHETTI (DEBIAN / PROXMOX VE)
+# ------------------------------------------------------------------------------
+
+REQUIRED_PACKAGES=("python3" "geoip-bin" "mutt" "fail2ban" "postfix")
+MISSING_PACKAGES=()
+
+for pkg in "${REQUIRED_PACKAGES[@]}"; do
+    if ! dpkg-query -W -f='${Status}' "$pkg" 2>/dev/null | grep -q "ok installed"; then
+        MISSING_PACKAGES+=("$pkg")
+    fi
+done
+
+if [ ${#MISSING_PACKAGES[@]} -ne 0 ]; then
+    echo -e "\e[31m[-] Errore: Pacchetti mancanti rilevati sul sistema:\e[0m" >&2
+    for pkg in "${MISSING_PACKAGES[@]}"; do
+        echo -e "    - $pkg" >&2
+    done
+    echo -e "\e[33m[!] Esegui il seguente comando per installarli:\e[0m" >&2
+    echo -e "    apt update && apt install -y ${MISSING_PACKAGES[*]}\n" >&2
+    exit 1
+fi
+
+# ------------------------------------------------------------------------------
 # 1. ELABORAZIONE INCREMENTALE OTTIMIZZATA (CACHE GEOIP + JSON MEMORY)
 # ------------------------------------------------------------------------------
 PYTHON_PROCESSOR=$(python3 -c '
