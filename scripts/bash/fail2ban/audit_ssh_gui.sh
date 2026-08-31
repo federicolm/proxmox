@@ -16,7 +16,6 @@ REPORT_HTML="/tmp/pve_sentinel_${CURRENT_DATE_STR}.html"
 # ------------------------------------------------------------------------------
 # VERIFICA DIPENDENZE PACCHETTI (DEBIAN / PROXMOX VE)
 # ------------------------------------------------------------------------------
-
 REQUIRED_PACKAGES=("python3" "geoip-bin" "mutt" "fail2ban" "postfix")
 MISSING_PACKAGES=()
 
@@ -110,7 +109,7 @@ for line in gui_lines:
             data["ips"][ip]["count"] += 1
             data["ips"][ip]["gui"] += 1
 
-# Ottimizzazione GeoIP: esegue la risoluzione solo per i top 10 attaccanti non ancora censiti nel JSON
+# Ottimizzazione GeoIP: esegue la risoluzione solo per i top attaccanti non ancora censiti nel JSON
 sorted_ips_temp = sorted(data["ips"].items(), key=lambda x: x[1]["count"], reverse=True)
 for ip, info in sorted_ips_temp[:20]:
     if info["country"] == "Unknown":
@@ -123,8 +122,18 @@ for ip, info in sorted_ips_temp[:20]:
 
 data["last_timestamp"] = now_str
 
+# Salvataggio su file JSON
 with open(json_path, "w") as f:
     json.dump(data, f, indent=2)
+
+# AUTO-BAN MASSIVO NATIVO IN PYTHON SU TUTTI GLI IP
+all_banned_raw = subprocess.run(["fail2ban-client", "status", "sshd"], capture_output=True, text=True).stdout + \
+                 subprocess.run(["fail2ban-client", "status", "proxmox"], capture_output=True, text=True).stdout
+
+for ip, info in data["ips"].items():
+    if ip not in all_banned_raw:
+        jail_to_use = "sshd" if info["ssh"] >= info["gui"] else "proxmox"
+        subprocess.run(["fail2ban-client", "set", jail_to_use, "banip", ip], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
 total_fails = sum(info["count"] for info in data["ips"].values())
 sorted_ips = sorted(data["ips"].items(), key=lambda x: x[1]["count"], reverse=True)
@@ -226,7 +235,7 @@ for country, count in d["top_countries"]:
 echo "</ul>" >> "$REPORT_HTML"
 
 # ------------------------------------------------------------------------------
-# 3. TOP 10 ATTACCANTI E STATO BANS
+# 3. TOP 10 ATTACCANTI E STATO BANS (REPORT HTML)
 # ------------------------------------------------------------------------------
 echo "<h2>📊 Top 10 Attaccanti e Azioni</h2>" >> "$REPORT_HTML"
 echo "<table><tr><th>Prove</th><th>IP Address</th><th>Nazione</th><th>Target</th><th>Azione</th></tr>" >> "$REPORT_HTML"
@@ -248,9 +257,6 @@ for ip, info in d["top_10"]:
     if [[ "$ALL_BANNED" =~ "$ip" ]]; then
         status="<span class='banned-label'>BANNED</span>"
     else
-        jail_to_use="sshd"
-        [ "$target" != "SSH" ] && jail_to_use="proxmox"
-        fail2ban-client set $jail_to_use banip "$ip" >/dev/null 2>&1
         status="<span class='autoband-label'>AUTO-BANNED</span>"
     fi
     
@@ -347,4 +353,3 @@ if [ -f "$REPORT_HTML" ]; then
     done
     echo -e "\e[32m[+] Report inviato correttamente a tutti i destinatari (Allegato: pve_sentinel_${CURRENT_DATE_STR}.html)\e[0m"
 fi
-
