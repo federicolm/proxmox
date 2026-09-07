@@ -1,4 +1,25 @@
-## Esempio di configurazione di fail2ban
+## Configurazione ottimizzata di Fail2ban per Proxmox VE
+[DEFAULT]
+ignoreip = 127.0.0.1/8 ::1 192.168.1.0/24 # qui si devono inserire gli ulteriori indirizzi ip di lan o pubblici che si vuol impedire che vengano bloccati da fail2ban
+
+[sshd]
+enabled = true
+port    = ssh
+filter  = sshd
+backend = systemd
+journalmatch = _SYSTEMD_UNIT=ssh.service
+maxretry = 5
+findtime = 1d
+bantime  = -1
+
+[proxmox]
+enabled = true
+port    = https,http,8006
+filter  = proxmox
+backend = systemd
+maxretry = 5
+findtime = 1d
+bantime  = -1
 [sshd]
 enabled = true
 port    = ssh
